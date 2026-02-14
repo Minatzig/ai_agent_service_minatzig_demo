@@ -13,7 +13,7 @@ class State(TypedDict):
 
 # Use FREE model with token limit
 llm = ChatOpenAI(
-    model="google/gemini-flash-1.5-8b",  # Correct name
+    model="nvidia/nemotron-nano-12b-v2-vl:free",  # Correct name
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
     max_tokens=500,  # Limit tokens to stay within free tier
