@@ -34,5 +34,5 @@ app = graph.compile()
 
 # Run
 print("Starting...")
-result = app.invoke({"messages": [("user", "Say hello!")]})
+result = app.invoke({"messages": [("user", "Whats your name?")]})
 print(f"\nDone!")
