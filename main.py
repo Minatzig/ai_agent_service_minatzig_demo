@@ -11,17 +11,18 @@ load_dotenv()
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
-# LLM (no tools for now - simpler test)
+# Use FREE model with token limit
 llm = ChatOpenAI(
-    model="anthropic/claude-3.5-sonnet",
+    model="meta-llama/llama-3.2-3b-instruct:free",  # FREE model
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
+    max_tokens=500,  # Limit tokens to stay within free tier
 )
 
 # Node
 def chatbot(state: State):
     response = llm.invoke(state["messages"])
-    print(f"LLM Response: {response.content}")  # Debug print
+    print(f"LLM Response: {response.content}")
     return {"messages": [response]}
 
 # Build graph
@@ -34,4 +35,4 @@ app = graph.compile()
 # Run
 print("Starting...")
 result = app.invoke({"messages": [("user", "Say hello!")]})
-print(f"Final result: {result}")
+print(f"\nDone!")
