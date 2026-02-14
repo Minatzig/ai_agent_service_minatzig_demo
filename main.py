@@ -13,7 +13,7 @@ class State(TypedDict):
 
 # Use FREE model with token limit
 llm = ChatOpenAI(
-    model="meta-llama/llama-3.2-3b-instruct:free",  # FREE model
+    model="mistralai/mistral-7b-instruct:free",
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
     max_tokens=500,  # Limit tokens to stay within free tier
