@@ -1,1 +1,101 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# C extensions
+*.pyd
+
+# Distribution / Packaging
+.Python
+build/
+develop-eggs/
+dist/
+eggs/
+*.egg-info/
+.install.lock
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.whl
+
+# Installer logs
+pip-log.txt
+pip-delete-this-line.txt
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+.nox/
+.tox/
+pytestcache/
+nosetests.xml
+coverage.xml
+*.cover
+*.mo
+*.pot
+*.log
+.last_external_build
+
+# IDEs and editors
+.idea/  # popular Python IDE PyCharm
+.vscode/ # popular editor VS Code
+*.swp
+.DS_Store # macOS files
+
+# Project environments
 .env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Miscellaneous
+.spyderproject
+.spyproject
+celerybeat.pid
+celeryd.pid
+.pylintrc
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pyre_configuration.json
+
+# Dependencies
+node_modules
+/jspm_packages
+
+# Optional npm cache files
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# IDEs and other tools
+.idea/
+.vscode/
+*.swp
+.DS_Store # macOS
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
