@@ -18,6 +18,8 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+console.log("[BOOT] rag.ts signature = 2026-02-25-A");
+console.log("[BOOT] render commit =", process.env.RENDER_GIT_COMMIT);
 // ── Configuration ─────────────────────────────────────────────────────────────
 
 const CLIENT_NAME            = "Vicky";                              // ← Hardcoded client name
@@ -37,6 +39,14 @@ for (const key of REQUIRED_ENV) {
 }
 
 // ── Database ──────────────────────────────────────────────────────────────────
+// DB_SSL: set "true" or "false" to force; if absent, SSL is auto-enabled when
+// running on Render (RENDER env var is always present there).
+
+const DB_SSL = process.env.DB_SSL !== undefined
+  ? process.env.DB_SSL === "true"
+  : !!process.env.RENDER;
+
+console.log(`[BOOT] DB_SSL=${DB_SSL} host=${process.env.DB_HOST || "localhost"}`);
 
 const pool = new Pool({
   host:     process.env.DB_HOST     || "localhost",
@@ -44,6 +54,7 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user:     process.env.DB_USER,
   password: process.env.DB_PASSWORD,
+  ...(DB_SSL ? { ssl: { rejectUnauthorized: false } } : {}),
 });
 
 const db = drizzle(pool);
@@ -171,6 +182,11 @@ async function embedQuestion(question: string): Promise<number[]> {
 
 async function retrieveChunks(embedding: number[], topK: number): Promise<Chunk[]> {
   const vectorStr = `[${embedding.join(",")}]`;
+  console.log(
+    `[vector_search] embedding_len=${embedding.length} EFFECTIVE_DIM=${EFFECTIVE_DIM} ` +
+    `TRUNCATE_EMBEDDING=${TRUNCATE_EMBEDDING} ` +
+    `vectorStr_preview=[${embedding.slice(0, 3).join(",")}...]`
+  );
 
   const result = await db.execute(sql`
     SELECT
@@ -532,7 +548,26 @@ app.post("/v1/resolve", async (req: Request, res: Response) => {
 
 // ── Start server ──────────────────────────────────────────────────────────────
 
+async function checkDB(): Promise<void> {
+  // 1. Basic connectivity
+  await db.execute(sql`SELECT 1`);
+  console.log("[startup] DB connected OK");
+
+  // 2. Table existence + row count — throws if document_chunks is missing
+  try {
+    const countResult = await db.execute(sql`SELECT COUNT(*) AS n FROM document_chunks`);
+    const n = (countResult.rows[0] as any)?.n ?? "?";
+    console.log(`[startup] document_chunks: ${n} rows`);
+  } catch (err) {
+    throw new Error(
+      `[startup] Table document_chunks does not exist or is inaccessible. ` +
+      `Run migrate.ts to create the schema. Detail: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
+
 async function startup(): Promise<void> {
+  await checkDB();
   await detectDimensions();
   const PORT = Number(process.env.PORT) || 3000;
   app.listen(PORT, () => {
