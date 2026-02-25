@@ -26,7 +26,6 @@ const CLIENT_NAME            = "Vicky";                              // ← Hard
 const PROMPT_DATA_CHECKER    = "data_checker:885899c9";    // ← data_checker commit
 const PROMPT_RESPUESTA_FINAL = "respuesta_final:fca2401d"; // ← respuesta_final commit
 const TOP_K                  = 5;
-const NO_ANSWER_MESSAGE      = "Esta pregunta debe ser contestada por un humano.";
 const LANGSMITH_API_URL      = "https://eu.api.smith.langchain.com";
 
 // ── Validate required env vars on startup ─────────────────────────────────────
@@ -314,9 +313,11 @@ async function runDataChecker(
   question: string,
   chunks: Chunk[]
 ): Promise<DataCheckerResponse | null> {
+  const allowedIds   = chunks.map(c => c.chunk_id).join(", ");
+  const idConstraint = `RULE: You MUST only select IDs that appear exactly as DOCUMENT_ID in the documents below. Do NOT invent or modify any ID.\nALLOWED_IDS: ${allowedIds}\n\n`;
   const filledPrompt = await buildPrompt(PROMPT_DATA_CHECKER, {
     question,
-    retrieved_document: formatChunks(chunks),
+    retrieved_document: idConstraint + formatChunks(chunks),
   });
 
   const raw     = await callGemini(filledPrompt);
@@ -413,34 +414,29 @@ app.post("/ask", async (req: Request, res: Response) => {
     const checkerResult = await runDataChecker(question, chunks);
     log(reqId, "data_checker_done", { durationMs: Date.now() - tChecker, selected: checkerResult?.relevant_documents?.length ?? 0 });
 
-    // 4. Escalate if no relevant documents found
-    if (!checkerResult?.relevant_documents?.length) {
-      console.log(`⚠️  No relevant documents — escalating to human`);
-      log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
-      return res.json({
-        answer:    NO_ANSWER_MESSAGE,
-        sources:   [],
-        escalated: true,
-      });
+    // 4. Validate data_checker IDs against retrieved chunk IDs; fall back to top-2 if none valid
+    const validChunkIds = new Set(chunks.map(c => c.chunk_id));
+    const validatedDocs = (checkerResult?.relevant_documents ?? []).filter(d => validChunkIds.has(d.id));
+    const originalCount = checkerResult?.relevant_documents?.length ?? 0;
+    const rejectedCount = originalCount - validatedDocs.length;
+    if (rejectedCount > 0) {
+      console.warn(`⚠️  data_checker hallucinated ${rejectedCount}/${originalCount} IDs — rejected`);
     }
 
-    const selectedIds = checkerResult.relevant_documents.map((d) => d.id);
-    console.log(`✅ data_checker selected IDs:`, selectedIds);
+    let relevantChunks: Chunk[];
+    if (validatedDocs.length > 0) {
+      const selectedIds = validatedDocs.map(d => d.id);
+      console.log(`✅ data_checker selected IDs (validated):`, selectedIds);
 
-    // 5. Fetch selected chunks directly from DB by ID
-    log(reqId, "chunk_fetch_start", { ids: selectedIds.length });
-    const tFetch = Date.now();
-    const relevantChunks = await fetchChunksByIds(selectedIds);
-    log(reqId, "chunk_fetch_done", { durationMs: Date.now() - tFetch, rows: relevantChunks.length });
-
-    if (relevantChunks.length === 0) {
-      console.warn(`⚠️  No chunks found in DB for selected IDs — escalating to human`);
-      log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
-      return res.json({
-        answer:    NO_ANSWER_MESSAGE,
-        sources:   [],
-        escalated: true,
-      });
+      // 5. Fetch selected chunks directly from DB by ID
+      log(reqId, "chunk_fetch_start", { ids: selectedIds.length });
+      const tFetch = Date.now();
+      relevantChunks = await fetchChunksByIds(selectedIds);
+      log(reqId, "chunk_fetch_done", { durationMs: Date.now() - tFetch, rows: relevantChunks.length });
+    } else {
+      console.warn(`⚠️  No valid IDs from data_checker — falling back to top-2 vector results`);
+      relevantChunks = chunks.slice(0, 2);
+      log(reqId, "chunk_fetch_done", { rows: relevantChunks.length, fallback: 1 });
     }
 
     console.log(`📄 Passing to respuesta_final:`);
@@ -513,20 +509,25 @@ app.post("/v1/resolve", async (req: Request, res: Response) => {
     const checkerResult = await runDataChecker(text, chunks);
     log(reqId, "data_checker_done", { durationMs: Date.now() - tChecker, selected: checkerResult?.relevant_documents?.length ?? 0 });
 
-    if (!checkerResult?.relevant_documents?.length) {
-      log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
-      return res.json({ replyText: NO_ANSWER_MESSAGE });
+    const validChunkIds = new Set(chunks.map(c => c.chunk_id));
+    const validatedDocs = (checkerResult?.relevant_documents ?? []).filter(d => validChunkIds.has(d.id));
+    const originalCount = checkerResult?.relevant_documents?.length ?? 0;
+    const rejectedCount = originalCount - validatedDocs.length;
+    if (rejectedCount > 0) {
+      console.warn(`⚠️  data_checker hallucinated ${rejectedCount}/${originalCount} IDs — rejected`);
     }
 
-    const selectedIds = checkerResult.relevant_documents.map((d) => d.id);
-    log(reqId, "chunk_fetch_start", { ids: selectedIds.length });
-    const tFetch = Date.now();
-    const relevantChunks = await fetchChunksByIds(selectedIds);
-    log(reqId, "chunk_fetch_done", { durationMs: Date.now() - tFetch, rows: relevantChunks.length });
-
-    if (relevantChunks.length === 0) {
-      log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
-      return res.json({ replyText: NO_ANSWER_MESSAGE });
+    let relevantChunks: Chunk[];
+    if (validatedDocs.length > 0) {
+      const selectedIds = validatedDocs.map(d => d.id);
+      log(reqId, "chunk_fetch_start", { ids: selectedIds.length });
+      const tFetch = Date.now();
+      relevantChunks = await fetchChunksByIds(selectedIds);
+      log(reqId, "chunk_fetch_done", { durationMs: Date.now() - tFetch, rows: relevantChunks.length });
+    } else {
+      console.warn(`⚠️  No valid IDs from data_checker — falling back to top-2 vector results`);
+      relevantChunks = chunks.slice(0, 2);
+      log(reqId, "chunk_fetch_done", { rows: relevantChunks.length, fallback: 1 });
     }
 
     log(reqId, "final_answer_start");
