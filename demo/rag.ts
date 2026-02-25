@@ -53,6 +53,81 @@ const db = drizzle(pool);
 const geminiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 const gemini       = wrapGemini(geminiClient);
 
+// ── Embedding dimension alignment ─────────────────────────────────────────────
+// At startup we query the DB for the actual vector column dimension and probe
+// the embedding model. If they mismatch we adapt (DEV: truncate) or abort (PROD).
+
+let EFFECTIVE_DIM      = 0;      // dimension of document_chunks.embedding, from DB
+let TRUNCATE_EMBEDDING = false;  // true when model output is truncated in DEV
+
+async function detectDimensions(): Promise<void> {
+  // Query the exact type of the embedding column so we know the DB dimension.
+  const colResult = await db.execute(sql`
+    SELECT format_type(atttypid, atttypmod) AS col_type
+    FROM   pg_attribute
+    WHERE  attrelid = 'document_chunks'::regclass
+      AND  attname  = 'embedding'
+      AND  attnum   > 0
+  `);
+
+  const colType  = (colResult.rows[0] as any)?.col_type as string ?? "";
+  const dimMatch = /vector\((\d+)\)/.exec(colType);
+
+  if (!dimMatch) {
+    throw new Error(
+      `[startup] Cannot parse embedding column type from DB (got: "${colType}"). ` +
+      `Ensure the document_chunks table exists with an 'embedding vector(N)' column.`
+    );
+  }
+
+  EFFECTIVE_DIM = parseInt(dimMatch[1], 10);
+
+  // Probe the model to find its actual output dimension.
+  const probeResp = await gemini.models.embedContent({
+    model:    "gemini-embedding-001",
+    contents: "dimension probe",
+  });
+  const modelDim = probeResp.embeddings![0].values!.length;
+
+  console.log(
+    `[startup] DB embedding column: ${colType} → ${EFFECTIVE_DIM} dims | ` +
+    `gemini-embedding-001 output: ${modelDim} dims`
+  );
+
+  if (EFFECTIVE_DIM === modelDim) {
+    console.log(`[startup] Dimension alignment ✓ — no adjustment needed`);
+    return;
+  }
+
+  const isProd = process.env.NODE_ENV === "production";
+
+  if (isProd) {
+    throw new Error(
+      `[startup] FATAL: embedding dimension mismatch in production. ` +
+      `DB column is vector(${EFFECTIVE_DIM}) but gemini-embedding-001 produces ${modelDim} dims. ` +
+      `Fix options: (1) ALTER TABLE document_chunks ALTER COLUMN embedding TYPE vector(${modelDim}) ` +
+      `and re-ingest all documents, or (2) switch to a model that outputs ${EFFECTIVE_DIM} dims.`
+    );
+  }
+
+  // DEV only: truncate if model output is longer than what the DB column holds.
+  if (modelDim > EFFECTIVE_DIM) {
+    TRUNCATE_EMBEDDING = true;
+    console.warn(
+      `[startup] ⚠️  DEV mode — model output (${modelDim} dims) > DB column (${EFFECTIVE_DIM} dims). ` +
+      `Embeddings will be TRUNCATED to ${EFFECTIVE_DIM} dims before vector search. ` +
+      `This reduces semantic quality. For production, re-ingest with the correct dimension.`
+    );
+  } else {
+    // Model is shorter than DB column — padding with zeros is semantically unsafe.
+    throw new Error(
+      `[startup] Embedding dimension mismatch: DB column expects ${EFFECTIVE_DIM} dims ` +
+      `but model produces only ${modelDim} dims. Padding is not safe. ` +
+      `Fix: ALTER the column to vector(${modelDim}) and re-ingest, or use a model that outputs ${EFFECTIVE_DIM} dims.`
+    );
+  }
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Chunk {
@@ -85,7 +160,11 @@ async function embedQuestion(question: string): Promise<number[]> {
     model:    "gemini-embedding-001",
     contents: question,
   });
-  return response.embeddings![0].values!;
+  let vec = response.embeddings![0].values!;
+  if (TRUNCATE_EMBEDDING && vec.length > EFFECTIVE_DIM) {
+    vec = vec.slice(0, EFFECTIVE_DIM);
+  }
+  return vec;
 }
 
 // ── Vector search ─────────────────────────────────────────────────────────────
@@ -194,6 +273,25 @@ function parseJSON<T>(raw: string): T {
   return JSON.parse(cleaned) as T;
 }
 
+// ── Debug logging helpers ──────────────────────────────────────────────────────
+// All structured logs are prefixed [RAG] for easy grepping in Render log viewer.
+
+function genId(): string {
+  return Math.random().toString(36).slice(2, 8);
+}
+
+function log(reqId: string, stage: string, extra: Record<string, string | number> = {}): void {
+  const parts = [`[RAG] reqId=${reqId}`, `stage=${stage}`];
+  for (const [k, v] of Object.entries(extra)) parts.push(`${k}=${v}`);
+  console.log(parts.join(" "));
+}
+
+function logError(reqId: string, stage: string, err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err);
+  const stack   = err instanceof Error ? (err.stack ?? "") : "";
+  console.error(`[RAG] reqId=${reqId} stage=${stage} ERROR message="${message}"\n${stack}`);
+}
+
 // ── Stage 1: data_checker ─────────────────────────────────────────────────────
 
 async function runDataChecker(
@@ -255,21 +353,38 @@ async function runRespuestaFinal(
 const app = express();
 app.use(express.json());
 
+// Health check — used by Render and any upstream load balancer.
+app.get("/healthz", (_req: Request, res: Response) => {
+  res.json({ ok: true });
+});
+
 app.post("/ask", async (req: Request, res: Response) => {
+  const reqId  = (req.body?.MessageSid as string | undefined) || genId();
+  const tTotal = Date.now();
   const { question } = req.body as { question?: string };
+
+  log(reqId, "request_received", { method: "POST", path: "/ask" });
 
   if (!question?.trim()) {
     return res.status(400).json({ error: "Missing or empty 'question' in request body" });
   }
 
+  log(reqId, "input_validated");
+
   try {
     console.log(`\n❓ Question: ${question}`);
 
     // 1. Embed question
+    log(reqId, "embedding_start");
+    const tEmbed = Date.now();
     const embedding = await embedQuestion(question);
+    log(reqId, "embedding_done", { durationMs: Date.now() - tEmbed, dims: embedding.length });
 
     // 2. Retrieve top 5 chunks by vector similarity
+    log(reqId, "vector_search_start");
+    const tVec = Date.now();
     const chunks = await retrieveChunks(embedding, TOP_K);
+    log(reqId, "vector_search_done", { durationMs: Date.now() - tVec, rows: chunks.length });
     console.log(`📚 Retrieved ${chunks.length} chunks:`);
     chunks.forEach((c) =>
       console.log(`   - [${c.chunk_id}] ${c.section_title} (${Number(c.similarity).toFixed(3)})`)
@@ -277,11 +392,15 @@ app.post("/ask", async (req: Request, res: Response) => {
 
     // 3. Stage 1 — data_checker selects relevant document IDs
     console.log(`\n🔍 Running data_checker...`);
+    log(reqId, "data_checker_start");
+    const tChecker = Date.now();
     const checkerResult = await runDataChecker(question, chunks);
+    log(reqId, "data_checker_done", { durationMs: Date.now() - tChecker, selected: checkerResult?.relevant_documents?.length ?? 0 });
 
     // 4. Escalate if no relevant documents found
     if (!checkerResult?.relevant_documents?.length) {
       console.log(`⚠️  No relevant documents — escalating to human`);
+      log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
       return res.json({
         answer:    NO_ANSWER_MESSAGE,
         sources:   [],
@@ -293,10 +412,14 @@ app.post("/ask", async (req: Request, res: Response) => {
     console.log(`✅ data_checker selected IDs:`, selectedIds);
 
     // 5. Fetch selected chunks directly from DB by ID
+    log(reqId, "chunk_fetch_start", { ids: selectedIds.length });
+    const tFetch = Date.now();
     const relevantChunks = await fetchChunksByIds(selectedIds);
+    log(reqId, "chunk_fetch_done", { durationMs: Date.now() - tFetch, rows: relevantChunks.length });
 
     if (relevantChunks.length === 0) {
       console.warn(`⚠️  No chunks found in DB for selected IDs — escalating to human`);
+      log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
       return res.json({
         answer:    NO_ANSWER_MESSAGE,
         sources:   [],
@@ -311,10 +434,14 @@ app.post("/ask", async (req: Request, res: Response) => {
 
     // 6. Stage 2 — respuesta_final generates answer from selected docs only
     console.log(`\n💬 Running respuesta_final...`);
+    log(reqId, "final_answer_start");
+    const tFinal = Date.now();
     const finalAnswer = await runRespuestaFinal(question, relevantChunks);
+    log(reqId, "final_answer_done", { durationMs: Date.now() - tFinal });
     console.log(`✅ Answer generated`);
 
     // 7. Return structured response
+    log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
     return res.json({
       answer:    finalAnswer.respuesta,
       logic:     finalAnswer.logica,
@@ -328,16 +455,95 @@ app.post("/ask", async (req: Request, res: Response) => {
     });
 
   } catch (err) {
+    logError(reqId, "pipeline", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("RAG error:", message);
+    log(reqId, "response_sent", { status: 500, totalMs: Date.now() - tTotal });
+    return res.status(500).json({ error: message });
+  }
+});
+
+// ── /v1/resolve — stable public endpoint (wraps existing RAG pipeline) ────────
+// Accepts { text: string }, returns { replyText: string }.
+// Does not alter any retrieval, prompt, or handoff logic.
+
+app.post("/v1/resolve", async (req: Request, res: Response) => {
+  const reqId  = (req.body?.MessageSid as string | undefined) || genId();
+  const tTotal = Date.now();
+  const { text } = req.body as { text?: string };
+
+  log(reqId, "request_received", { method: "POST", path: "/v1/resolve" });
+
+  if (!text?.trim()) {
+    return res.status(400).json({ error: "Missing or empty 'text' in request body" });
+  }
+
+  log(reqId, "input_validated");
+  console.log(`[/v1/resolve] ${new Date().toISOString()} len=${text.length}`);
+
+  try {
+    log(reqId, "embedding_start");
+    const tEmbed = Date.now();
+    const embedding = await embedQuestion(text);
+    log(reqId, "embedding_done", { durationMs: Date.now() - tEmbed, dims: embedding.length });
+
+    log(reqId, "vector_search_start");
+    const tVec = Date.now();
+    const chunks = await retrieveChunks(embedding, TOP_K);
+    log(reqId, "vector_search_done", { durationMs: Date.now() - tVec, rows: chunks.length });
+
+    log(reqId, "data_checker_start");
+    const tChecker = Date.now();
+    const checkerResult = await runDataChecker(text, chunks);
+    log(reqId, "data_checker_done", { durationMs: Date.now() - tChecker, selected: checkerResult?.relevant_documents?.length ?? 0 });
+
+    if (!checkerResult?.relevant_documents?.length) {
+      log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
+      return res.json({ replyText: NO_ANSWER_MESSAGE });
+    }
+
+    const selectedIds = checkerResult.relevant_documents.map((d) => d.id);
+    log(reqId, "chunk_fetch_start", { ids: selectedIds.length });
+    const tFetch = Date.now();
+    const relevantChunks = await fetchChunksByIds(selectedIds);
+    log(reqId, "chunk_fetch_done", { durationMs: Date.now() - tFetch, rows: relevantChunks.length });
+
+    if (relevantChunks.length === 0) {
+      log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
+      return res.json({ replyText: NO_ANSWER_MESSAGE });
+    }
+
+    log(reqId, "final_answer_start");
+    const tFinal = Date.now();
+    const finalAnswer = await runRespuestaFinal(text, relevantChunks);
+    log(reqId, "final_answer_done", { durationMs: Date.now() - tFinal });
+
+    log(reqId, "response_sent", { status: 200, totalMs: Date.now() - tTotal });
+    return res.json({ replyText: finalAnswer.respuesta });
+
+  } catch (err) {
+    logError(reqId, "pipeline", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error(`[/v1/resolve] error: ${message}`);
+    log(reqId, "response_sent", { status: 500, totalMs: Date.now() - tTotal });
     return res.status(500).json({ error: message });
   }
 });
 
 // ── Start server ──────────────────────────────────────────────────────────────
 
-const PORT = Number(process.env.PORT) || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 RAG server running on http://localhost:${PORT}`);
-  console.log(`   POST /ask  { "question": "your question here" }`);
+async function startup(): Promise<void> {
+  await detectDimensions();
+  const PORT = Number(process.env.PORT) || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 RAG server running on http://localhost:${PORT}`);
+    console.log(`   POST /ask  { "question": "your question here" }`);
+    console.log(`   POST /v1/resolve  { "text": "your question here" }`);
+    console.log(`   GET  /healthz`);
+  });
+}
+
+startup().catch((err) => {
+  console.error("[startup] Fatal error:", err instanceof Error ? err.message : String(err));
+  process.exit(1);
 });

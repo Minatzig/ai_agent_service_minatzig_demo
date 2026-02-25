@@ -2,9 +2,14 @@
   "name": "demo",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/rag.js",
   "scripts": {
+    "build": "tsc",
+    "start": "node dist/rag.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +27,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/node": "^20.0.0",
     "@types/pg": "^8.16.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

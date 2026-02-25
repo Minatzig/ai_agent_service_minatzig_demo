@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2021",
-    "lib": ["ES2021"],
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
     "module": "commonjs",
     "esModuleInterop": true,
     "strict": false,
+    "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": "./"
   }
