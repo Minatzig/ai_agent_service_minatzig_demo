@@ -1,15 +1,29 @@
-import uuid
+import hashlib
 import json
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 from google import genai
+
+load_dotenv()
+
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
-GEMINI_API_KEY = "AIzaSyDvPjSnCKsZXGLvoNE6JT0F7JAEc2RE1sY"
+def _require(name: str) -> str:
+    val = os.environ.get(name)
+    if not val:
+        raise SystemExit(
+            f"ERROR: Required environment variable '{name}' is not set.\n"
+            f"       Copy chunking_documentation/.env.example to "
+            f"chunking_documentation/.env and fill in your values."
+        )
+    return val
 
-INPUT_FOLDER  = "/Users/adinisman/Downloads/dynatech/input_docs"   # ← PUT YOUR INPUT PATH HERE
-OUTPUT_FOLDER = "/Users/adinisman/Downloads/dynatech/output_docs"  # ← PUT YOUR OUTPUT PATH HERE
+
+GEMINI_API_KEY = _require("GEMINI_API_KEY")
+INPUT_FOLDER   = _require("CHUNKER_INPUT_FOLDER")
+OUTPUT_FOLDER  = _require("CHUNKER_OUTPUT_FOLDER")
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -143,7 +157,7 @@ def process_document(filepath: str, doc_type: str = "manual") -> list[dict]:
             }
 
         final_chunks.append({
-            "chunk_id":        str(uuid.uuid4()),
+            "chunk_id":        hashlib.sha256(f"{filename}:{i}".encode()).hexdigest(),
             "source_file":     filename,
             "doc_type":        doc_type,
             "section_title":   title,

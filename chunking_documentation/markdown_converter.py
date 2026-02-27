@@ -1,11 +1,26 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 import pymupdf4llm
 import docx
 from markdownify import markdownify as md
 
-INPUT_FOLDER  = "/Users/adinisman/Downloads/dynatech/input_docs"   # ← PUT YOUR INPUT PATH HERE
-OUTPUT_FOLDER = "/Users/adinisman/Downloads/dynatech/output_docs"  # same as input but now as markdown
+load_dotenv()
+
+
+def _require(name: str) -> str:
+    val = os.environ.get(name)
+    if not val:
+        raise SystemExit(
+            f"ERROR: Required environment variable '{name}' is not set.\n"
+            f"       Copy chunking_documentation/.env.example to "
+            f"chunking_documentation/.env and fill in your values."
+        )
+    return val
+
+
+INPUT_FOLDER = _require("CHUNKER_INPUT_FOLDER")
+
 
 def convert_pdf(filepath: Path) -> str:
     """Convert PDF to Markdown using pymupdf4llm (preserves structure well)."""
@@ -25,6 +40,7 @@ if __name__ == "__main__":
 
     if not pdf_files and not docx_files:
         print("⚠️  No PDF or DOCX files found.")
+        print(f"    Looking in: {INPUT_FOLDER}")
         exit()
 
     for pdf in pdf_files:

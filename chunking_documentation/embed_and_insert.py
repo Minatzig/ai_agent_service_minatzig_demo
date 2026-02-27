@@ -15,10 +15,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 # ── Configuration ─────────────────────────────────────────────────────────────
 
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-CHUNKS_FILE    = "/Users/adinisman/Downloads/dynatech/output_docs/all_chunks.json"  # ← YOUR PATH HERE
+def _require(name: str) -> str:
+    val = os.environ.get(name)
+    if not val:
+        raise SystemExit(
+            f"ERROR: Required environment variable '{name}' is not set.\n"
+            f"       Copy chunking_documentation/.env.example to "
+            f"chunking_documentation/.env and fill in your values."
+        )
+    return val
+
+
+GEMINI_API_KEY = _require("GEMINI_API_KEY")
+
+# CHUNKS_FILE can be set explicitly, or derived from CHUNKER_OUTPUT_FOLDER
+_output_folder = os.environ.get("CHUNKER_OUTPUT_FOLDER", "")
+CHUNKS_FILE = os.environ.get("CHUNKS_FILE") or (
+    os.path.join(_output_folder, "all_chunks.json") if _output_folder else None
+)
+if not CHUNKS_FILE:
+    raise SystemExit(
+        "ERROR: Either 'CHUNKS_FILE' or 'CHUNKER_OUTPUT_FOLDER' must be set.\n"
+        "       Copy chunking_documentation/.env.example to "
+        "chunking_documentation/.env and fill in your values."
+    )
+
+_require("DB_HOST")
+_require("DB_PORT")
+_require("DB_NAME")
+_require("DB_USER")
+_require("DB_PASSWORD")
 
 # ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -38,7 +67,8 @@ def insert_chunks(chunks: list[dict]):
         port=int(os.environ["DB_PORT"]),
         dbname=os.environ["DB_NAME"],
         user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"]
+        password=os.environ["DB_PASSWORD"],
+        sslmode=os.environ.get("DB_SSLMODE", "require"),
     )
     cur = conn.cursor()
 
@@ -60,7 +90,17 @@ def insert_chunks(chunks: list[dict]):
                     %s, %s, %s,
                     %s, %s, %s, %s::vector
                 )
-                ON CONFLICT (chunk_id) DO NOTHING
+                ON CONFLICT (chunk_id) DO UPDATE SET
+                    source_file     = EXCLUDED.source_file,
+                    doc_type        = EXCLUDED.doc_type,
+                    section_title   = EXCLUDED.section_title,
+                    chunk_index     = EXCLUDED.chunk_index,
+                    self_contained  = EXCLUDED.self_contained,
+                    missing_context = EXCLUDED.missing_context,
+                    summary         = EXCLUDED.summary,
+                    text            = EXCLUDED.text,
+                    embed_input     = EXCLUDED.embed_input,
+                    embedding       = EXCLUDED.embedding
             """, (
                 chunk["chunk_id"],
                 chunk["source_file"],
