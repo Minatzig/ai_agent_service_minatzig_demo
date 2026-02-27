@@ -24,8 +24,8 @@ console.log("[BOOT] render commit =", process.env.RENDER_GIT_COMMIT);
 
 const CLIENT_NAME            = "Vicky";                              // ← Hardcoded client name
 const PROMPT_DATA_CHECKER    = "data_checker:885899c9";    // ← data_checker commit
-const PROMPT_RESPUESTA_FINAL = "respuesta_final:fca2401d"; // ← respuesta_final commit
-const TOP_K                  = 5;
+const PROMPT_RESPUESTA_FINAL = "respuesta_final:77fd31b5"; // ← respuesta_final commit
+const TOP_K                  = 4;
 const LANGSMITH_API_URL      = "https://eu.api.smith.langchain.com";
 
 // ── Validate required env vars on startup ─────────────────────────────────────
