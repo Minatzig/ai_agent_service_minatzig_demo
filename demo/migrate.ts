@@ -15,7 +15,7 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user:     process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  // No SSL needed for local Postgres
+  ssl: process.env.DB_SSLMODE === "require" ? { rejectUnauthorized: false } : false,
 });
 
 const db = drizzle(pool);
@@ -24,7 +24,14 @@ async function migrate() {
   console.log("Enabling pgvector extension...");
   await db.execute(sql`CREATE EXTENSION IF NOT EXISTS vector`);
 
-  console.log("Creating document_chunks table...");
+  console.log("Dropping existing document_chunks table if it exists...");
+  try {
+    await db.execute(sql`DROP TABLE IF EXISTS document_chunks CASCADE`);
+  } catch (err) {
+    console.log("Table didn't exist - that's OK");
+  }
+
+  console.log("Creating document_chunks table with vector(768)...");
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS document_chunks (
       chunk_id        TEXT PRIMARY KEY,
@@ -42,11 +49,12 @@ async function migrate() {
     )
   `);
 
-  console.log("Creating HNSW index for fast vector search...");
+  console.log("Creating vector search index...");
   await db.execute(sql`
     CREATE INDEX IF NOT EXISTS document_chunks_embedding_idx
     ON document_chunks
-    USING hnsw (embedding vector_cosine_ops)
+    USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 100)
   `);
 
   console.log("✅ Migration complete!");

@@ -1,11 +1,12 @@
 {
   "name": "demo",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/rag.js",
+  "description": "RAG (Retrieval-Augmented Generation) API with separated routes, controllers, and services",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/rag.js",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {

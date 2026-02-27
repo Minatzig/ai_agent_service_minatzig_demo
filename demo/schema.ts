@@ -5,7 +5,7 @@ import { customType } from "drizzle-orm/pg-core";
 // gemini-embedding-001 outputs 768 dimensions
 const vector = customType<{ data: number[]; driverData: string }>({
   dataType() {
-    return "vector(3072)";
+    return "vector(768)";
   },
   toDriver(value: number[]): string {
     return `[${value.join(",")}]`;
