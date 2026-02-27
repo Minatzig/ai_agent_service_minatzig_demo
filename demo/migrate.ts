@@ -31,7 +31,7 @@ async function migrate() {
     console.log("Table didn't exist - that's OK");
   }
 
-  console.log("Creating document_chunks table with vector(768)...");
+  console.log("Creating document_chunks table with vector(3072)...");
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS document_chunks (
       chunk_id        TEXT PRIMARY KEY,
@@ -44,18 +44,33 @@ async function migrate() {
       summary         TEXT,
       text            TEXT NOT NULL,
       embed_input     TEXT,
-      embedding       vector(768),
+      embedding       vector(3072),
       created_at      TIMESTAMPTZ DEFAULT now()
     )
   `);
 
   console.log("Creating vector search index...");
-  await db.execute(sql`
-    CREATE INDEX IF NOT EXISTS document_chunks_embedding_idx
-    ON document_chunks
-    USING ivfflat (embedding vector_cosine_ops)
-    WITH (lists = 100)
-  `);
+  // Neon pgvector has a 2000 dimension limit for indexes (both HNSW and ivfflat)
+  // Since gemini-embedding-001 outputs 3072 dimensions, we skip index creation
+  // Vector search will still work, just slower without the index
+  try {
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS document_chunks_embedding_idx
+      ON document_chunks
+      USING ivfflat (embedding vector_cosine_ops)
+      WITH (lists = 100)
+    `);
+    console.log("✅ Vector index created successfully");
+  } catch (err: any) {
+    const errorStr = String(err) + (err.cause ? String(err.cause) : "");
+    if (errorStr.includes("cannot have more than 2000 dimensions")) {
+      console.warn("⚠️  Vector dimension (3072) exceeds Neon's 2000-dimension index limit");
+      console.warn("⚠️  Vector search will work without index (slower performance)");
+      console.warn("⚠️  To use indexes, reduce dimension to <2000 or use a smaller embedding model");
+    } else {
+      throw err;
+    }
+  }
 
   console.log("✅ Migration complete!");
   await pool.end();

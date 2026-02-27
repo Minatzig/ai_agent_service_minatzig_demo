@@ -2,10 +2,10 @@
 import { pgTable, text, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { customType } from "drizzle-orm/pg-core";
 
-// gemini-embedding-001 outputs 768 dimensions
+// gemini-embedding-001 outputs 3072 dimensions
 const vector = customType<{ data: number[]; driverData: string }>({
   dataType() {
-    return "vector(768)";
+    return "vector(3072)";
   },
   toDriver(value: number[]): string {
     return `[${value.join(",")}]`;
