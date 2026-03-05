@@ -43,6 +43,9 @@ Rules:
 - Preserve all the original text, do not summarize or omit anything
 - Use the document's own structure as a guide (headings, numbered items, bold titles, topic changes)
 - For tables, keep them together with their title/context in the same section
+- When creating the summary of the chubk, take into consideration the summary of the document of that specific chunk so that it can be more accurate.
+
+- All outputs aside from the JSON key names should be in Spanish, as the document is in Spanish.
 
 Document filename: {filename}
 
@@ -61,7 +64,25 @@ Example format:
   {{"title": "Data Fields", "content": "...full text..."}}
 ]
 
-Return only raw JSON, no markdown fences, no explanation."""
+Return only raw JSON, no markdown fences, no explanation.
+
+Here is a small summary of each document based on the document name so that it can better help you create the chunks.
+
+[
+  {
+    "nombre_documento": "BCU-COMUNICACION-No-2024-158-PROMULGADA-30.07.2024-GESTORES-PORTAFOLIOS.md",
+    "resumen": "Comunicación del Banco Central del Uruguay dirigida a los Gestores de Portafolios que establece la obligación de llevar un Registro electrónico de Instrucciones cursadas a intermediarios de valores que hayan sido ejecutadas. Define las disposiciones generales, los datos mínimos obligatorios que deben registrarse por cada instrucción (identificación, tipo de operación, cliente, instrumento, precio, moneda, montos, etc.), el procedimiento para corregir errores, omisiones o anulaciones, y el formato y plazo de envío de la información a la Superintendencia de Servicios Financieros (archivo XML trimestral dentro de los 10 días hábiles posteriores al cierre). Entra en vigencia para instrucciones cursadas desde el 1° de enero de 2025 y deja sin efecto la comunicación anterior 2023/183."
+  },
+  {
+    "nombre_documento": "BCU-COMUNICACION-No-2024-159-PROMULGADA-30.07.2024-ASESORES DE INVERSION.md",
+    "resumen": "Comunicación del Banco Central del Uruguay dirigida a los Asesores de Inversión que regula la creación y mantenimiento de un Registro electrónico de Instrucciones cursadas a intermediarios de valores ejecutadas. Establece los requisitos formales del registro, los datos mínimos obligatorios por instrucción (numeración anual, tipo de operación, cliente, instrumento, precio, moneda, montos y observaciones), el tratamiento de partes vinculadas, y los procedimientos para correcciones, omisiones y anulaciones. También determina la obligación de remitir la información en formato XML a la Superintendencia de Servicios Financieros de forma trimestral. Rige para instrucciones cursadas desde el 1° de enero de 2025 y sustituye la comunicación 2023/184."
+  },
+  {
+    "nombre_documento": "cartilla BCF usuarios V2.md",
+    "resumen": "Manual de usuario del Sistema BCF (Versión 2.0, diciembre 2024), herramienta que permite importar archivos Excel con instrucciones y generar el archivo XML requerido para cumplir con la Comunicación 2024/159 del BCU. Explica el acceso al sistema, la vinculación de usuario con empresa y consultora, la pantalla principal, el proceso de importación de Excel, los controles automáticos de validación (incluyendo validación de códigos BCU), la gestión de errores detectados en filas y columnas, y la generación o regeneración del archivo XML para su envío."
+  }
+]
+"""
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
