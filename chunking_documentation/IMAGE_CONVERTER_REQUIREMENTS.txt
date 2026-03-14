@@ -1,0 +1,18 @@
+# Install requirements for image_converter.py
+
+# Already included (likely already installed):
+# - google-genai  (Gemini API)
+# - python-dotenv (environment variables)
+
+# The image_converter uses only standard library + google-genai
+# No new dependencies are required beyond what you already have for chunker.py
+# 
+# However, ensure you have:
+# - google-genai >= 0.5.0 (with vision support)
+# - Python >= 3.8
+
+# If you want to reinstall or verify:
+# pip install google-genai python-dotenv
+
+# For full pipeline, install all dependencies:
+# pip install -r requirements.txt (from root project)
