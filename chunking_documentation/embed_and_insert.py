@@ -33,14 +33,38 @@ GEMINI_API_KEY = _require("GEMINI_API_KEY")
 
 # CHUNKS_FILE can be set explicitly, or derived from CHUNKER_OUTPUT_FOLDER
 _output_folder = os.environ.get("CHUNKER_OUTPUT_FOLDER", "")
-CHUNKS_FILE = os.environ.get("CHUNKS_FILE") or (
-    os.path.join(_output_folder, "all_chunks.json") if _output_folder else None
-)
-if not CHUNKS_FILE:
+
+# Look for all_chunks.json - check multiple locations for pipeline compatibility
+CHUNKS_FILE = None
+
+# Try 1: Explicit CHUNKS_FILE env var
+if os.environ.get("CHUNKS_FILE"):
+    CHUNKS_FILE = os.environ.get("CHUNKS_FILE")
+
+# Try 2: In the current output folder
+if not CHUNKS_FILE or not os.path.exists(CHUNKS_FILE):
+    if _output_folder:
+        candidate = os.path.join(_output_folder, "all_chunks.json")
+        if os.path.exists(candidate):
+            CHUNKS_FILE = candidate
+
+# Try 3: Look for 03_chunking folder (previous pipeline stage with correct name)
+if not CHUNKS_FILE or not os.path.exists(CHUNKS_FILE):
+    if _output_folder:
+        # Check if we're in a parent folder and 03_chunking exists as a sibling
+        parent = os.path.dirname(_output_folder)
+        chunks_folder = os.path.join(parent, "03_chunking")
+        candidate = os.path.join(chunks_folder, "all_chunks.json")
+        if os.path.exists(candidate):
+            CHUNKS_FILE = candidate
+
+if not CHUNKS_FILE or not os.path.exists(CHUNKS_FILE):
     raise SystemExit(
-        "ERROR: Either 'CHUNKS_FILE' or 'CHUNKER_OUTPUT_FOLDER' must be set.\n"
-        "       Copy chunking_documentation/.env.example to "
-        "chunking_documentation/.env and fill in your values."
+        f"ERROR: Could not find chunks file.\n"
+        f"       Searched:\n"
+        f"         - {os.path.join(_output_folder, 'all_chunks.json') if _output_folder else 'unknown'}\n"
+        f"         - {os.path.join(os.path.dirname(_output_folder), '03_chunking', 'all_chunks.json') if _output_folder else 'unknown'}\n"
+        f"       Please ensure the chunking stage completed successfully."
     )
 
 _require("DB_HOST")

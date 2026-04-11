@@ -145,7 +145,10 @@ export function validateAndGetRelevantChunks(
   hadFallback: boolean;
 } {
   const validChunkIds = new Set(originalChunks.map(c => c.chunk_id));
-  const validatedDocs = (checkerResult?.relevant_documents ?? []).filter(d => validChunkIds.has(d.id));
+  // Trim IDs from data_checker response to handle whitespace issues
+  const validatedDocs = (checkerResult?.relevant_documents ?? [])
+    .map(d => ({ ...d, id: d.id.trim() }))
+    .filter(d => validChunkIds.has(d.id));
   const originalCount = checkerResult?.relevant_documents?.length ?? 0;
   const rejectedCount = originalCount - validatedDocs.length;
 

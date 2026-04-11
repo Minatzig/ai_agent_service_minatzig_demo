@@ -109,6 +109,23 @@ export async function executeRAGPipeline(
       chunks
     );
 
+    // If no relevant documents found (0 chunks and fallback exhausted), escalate
+    if (relevantChunks.length === 0 && hadFallback) {
+      console.warn(`⚠️  No relevant documents found — escalating to human`);
+      log(reqId, "no_relevant_docs", { handoff: true });
+
+      const executionTime = Date.now() - tTotal;
+      log(reqId, "response_prepared", { status: 200, totalMs: executionTime });
+
+      return {
+        answer: "No he encontrado información relevante en la base de datos para responder tu pregunta. Por favor, contacta con un agente humano para obtener ayuda.",
+        logic: "La búsqueda vectorial no retornó documentos relevantes, y el análisis de relevancia no identificó ningún documento adecuado para responder la pregunta.",
+        sources: [],
+        handoff: true,
+        executionTime,
+      };
+    }
+
     console.log(`📄 Passing to respuesta_final:`);
     relevantChunks.forEach((c) =>
       console.log(`   - [${c.chunk_id}] ${c.section_title}`)
@@ -195,10 +212,25 @@ export async function executeRAGPipelineMinimal(
     });
 
     // Step 4: Validate and fallback
-    const { chunks: relevantChunks } = validateAndGetRelevantChunks(
+    const { chunks: relevantChunks, hadFallback } = validateAndGetRelevantChunks(
       checkerResult,
       chunks
     );
+
+    // If no relevant documents found, escalate
+    if (relevantChunks.length === 0 && hadFallback) {
+      console.warn(`⚠️  [/v1/resolve] No relevant documents found — escalating`);
+      log(reqId, "no_relevant_docs", { handoff: true });
+
+      const executionTime = Date.now() - tTotal;
+      log(reqId, "response_prepared", { status: 200, totalMs: executionTime });
+
+      return {
+        replyText: "No tengo información disponible para responder. Por favor, contacta con soporte.",
+        handoff: true,
+        executionTime,
+      };
+    }
 
     // Step 5: Generate answer
     log(reqId, "final_answer_start");

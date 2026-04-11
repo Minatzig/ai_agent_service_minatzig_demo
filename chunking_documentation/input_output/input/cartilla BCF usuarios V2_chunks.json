@@ -1,0 +1,110 @@
+[
+  {
+    "chunk_id": "2a3c5fb8daf1a41ecf090cd1f791a38e3b7a5324f8c403ab8b971b44d9494a05",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Documento de Introducción y Estructura",
+    "chunk_index": 0,
+    "self_contained": false,
+    "missing_context": "The chunk is only an index/table of contents; it lacks the actual technical documentation or content for the sections listed.",
+    "summary": "This chunk provides the table of contents and version information for the BCF system user manual.",
+    "text": "This is the table of contents for the 'Cartilla de uso sistema BCF' (Communication 2024/159, Version 2.0, Dec 2024), outlining the structure of the manual. Cartilla de uso sistema BCF\nComunicación 2024/159\nVersión 2.0\nDiciembre 2024\nÍndice\nSistema BCF 3\nAcceso 3\nPantalla Principal 4\nAnexo explicación de Excel 7\nAnexo Controles BCU 8",
+    "embed_input": "This chunk provides the table of contents and version information for the BCF system user manual.\n\nThis is the table of contents for the 'Cartilla de uso sistema BCF' (Communication 2024/159, Version 2.0, Dec 2024), outlining the structure of the manual. Cartilla de uso sistema BCF\nComunicación 2024/159\nVersión 2.0\nDiciembre 2024\nÍndice\nSistema BCF 3\nAcceso 3\nPantalla Principal 4\nAnexo explicación de Excel 7\nAnexo Controles BCU 8"
+  },
+  {
+    "chunk_id": "d1d369fd3f3dbd5bc6faf60d1bf9919195c45626dbba616e46852cacf4480c1d",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Descripción del Sistema BCF",
+    "chunk_index": 1,
+    "self_contained": true,
+    "missing_context": null,
+    "summary": "This chunk defines the purpose and functionality of the BCF System in relation to the Central Bank of Uruguay's Communication 2024/159.",
+    "text": "Sistema BCF\nSistema que permite importar desde planillas XLS el control y la generación de archivo XML para el cumplimiento de la Comunicación del Banco Central del Uruguay: Comunicación 2024/159",
+    "embed_input": "This chunk defines the purpose and functionality of the BCF System in relation to the Central Bank of Uruguay's Communication 2024/159.\n\nSistema BCF\nSistema que permite importar desde planillas XLS el control y la generación de archivo XML para el cumplimiento de la Comunicación del Banco Central del Uruguay: Comunicación 2024/159"
+  },
+  {
+    "chunk_id": "634b61b02358a48bbf182937bba26bd48eeeb279483e061602e4054f045dca60",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Acceso al Sistema",
+    "chunk_index": 2,
+    "self_contained": false,
+    "missing_context": "The chunk mentions two different URLs for the same system, creating ambiguity regarding which environment the user should access.",
+    "summary": "This chunk explains how to access the BCF system by providing the login URL and detailing the authentication requirements.",
+    "text": "Regarding the BCF system, which manages compliance with BCU Communication 2024/159, here is the procedure for system access: URL: http://192.168.2.226:8080/ValoresWeb/com.valoresweb.wloginvalores (esta es la interna Dynatech). Aparecerá pantalla para acceso en la cual deberá tener usuario (un alias) y un password. Dicho usuario deberá tener asociado una casilla, la cual debe estar asociado a una casilla o bien con el dominio de la empresa o casilla registrada en el BCU. El usuario estará vinculado a una empresa y ésta a la empresa que le dé el soporte, de aquí en adelante denominada “Consultora”.",
+    "embed_input": "This chunk explains how to access the BCF system by providing the login URL and detailing the authentication requirements.\n\nRegarding the BCF system, which manages compliance with BCU Communication 2024/159, here is the procedure for system access: URL: http://192.168.2.226:8080/ValoresWeb/com.valoresweb.wloginvalores (esta es la interna Dynatech). Aparecerá pantalla para acceso en la cual deberá tener usuario (un alias) y un password. Dicho usuario deberá tener asociado una casilla, la cual debe estar asociado a una casilla o bien con el dominio de la empresa o casilla registrada en el BCU. El usuario estará vinculado a una empresa y ésta a la empresa que le dé el soporte, de aquí en adelante denominada “Consultora”."
+  },
+  {
+    "chunk_id": "c740df05ddd29e2a5f9de8f2d07613010cf2b2b0063a1ab76085fe146ad5d475",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Pantalla Principal y Funcionalidades",
+    "chunk_index": 3,
+    "self_contained": false,
+    "missing_context": "The chunk lacks a clear definition of what 'the BCF system' is and the specific business context of the 'Procesamientos' screen, relying on information from the previous login section.",
+    "summary": "This chunk describes the main dashboard of the BCF system, including navigation, user identification, and the core functionality of processing data imports.",
+    "text": "After successfully logging into the BCF compliance system, the user is directed to the main dashboard. [Image description: The image displays the \"Procesamientos\" (Processing) dashboard of the BCF system, featuring a left-hand navigation menu and a central workspace with buttons for \"Nuevo Proceso\" (New Process), \"Exportar XLS\" (Export XLS), \"Reporte\" (Report), and \"Seleccionar columnas\" (Select Columns). The main content area contains a data table header with columns for Id, Fecha, Usuario, Imp, Mes, Archivo, Lineas, Errores, Itr Desde, Hasta, and Exp, currently showing \"No se encontraron registros\" (No records found). This interface serves as the primary hub for users to initiate data imports and view processing history, marked by the Dynatech logo in the lower-left corner and user account information in the top navigation bar.] [Image description: The \"Procesamientos\" screen displays a grid of file imports, identifying the status of each upload through indicators like \"IMPOK\" (green) for successful imports and \"IMPERR\" (red) for those containing errors. To manage these processes, users can utilize the action buttons in the top toolbar or click the XML icon located at the end of each row to generate the required compliance file for the Central Bank of Uruguay. This interface allows users to monitor processing results, identify error counts, and finalize the reporting workflow for each uploaded record.] [Image description: Upon accessing the system, a login screen appears featuring a button labeled \"Nuevo Proceso.\" Clicking this button is the required action to initiate a new data import or compliance process within the BCF system.] Pantalla Principal Al momento del ingreso se presenta la siguiente pantalla, En la parte superior de la misma, observamos el usuario conectado, a que asesor/gestor/agente pertenece y a cuál consultora. En cuanto a la funcionalidad, se pueden generar procesamientos (lectura de Excel y generación de xml).",
+    "embed_input": "This chunk describes the main dashboard of the BCF system, including navigation, user identification, and the core functionality of processing data imports.\n\nAfter successfully logging into the BCF compliance system, the user is directed to the main dashboard. [Image description: The image displays the \"Procesamientos\" (Processing) dashboard of the BCF system, featuring a left-hand navigation menu and a central workspace with buttons for \"Nuevo Proceso\" (New Process), \"Exportar XLS\" (Export XLS), \"Reporte\" (Report), and \"Seleccionar columnas\" (Select Columns). The main content area contains a data table header with columns for Id, Fecha, Usuario, Imp, Mes, Archivo, Lineas, Errores, Itr Desde, Hasta, and Exp, currently showing \"No se encontraron registros\" (No records found). This interface serves as the primary hub for users to initiate data imports and view processing history, marked by the Dynatech logo in the lower-left corner and user account information in the top navigation bar.] [Image description: The \"Procesamientos\" screen displays a grid of file imports, identifying the status of each upload through indicators like \"IMPOK\" (green) for successful imports and \"IMPERR\" (red) for those containing errors. To manage these processes, users can utilize the action buttons in the top toolbar or click the XML icon located at the end of each row to generate the required compliance file for the Central Bank of Uruguay. This interface allows users to monitor processing results, identify error counts, and finalize the reporting workflow for each uploaded record.] [Image description: Upon accessing the system, a login screen appears featuring a button labeled \"Nuevo Proceso.\" Clicking this button is the required action to initiate a new data import or compliance process within the BCF system.] Pantalla Principal Al momento del ingreso se presenta la siguiente pantalla, En la parte superior de la misma, observamos el usuario conectado, a que asesor/gestor/agente pertenece y a cuál consultora. En cuanto a la funcionalidad, se pueden generar procesamientos (lectura de Excel y generación de xml)."
+  },
+  {
+    "chunk_id": "b42e75f7462453fa6aeba54aed96fbca7bf8c26469f2e0dd38350e7e2ca85894",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Proceso de Importación de Datos",
+    "chunk_index": 4,
+    "self_contained": false,
+    "missing_context": "The chunk refers to a button without identifying where the user is located in the UI, and the sentence fragment 'Nuevo Proceso de importación' lacks a direct link to the 'Nuevo Proceso' button described in the previous section.",
+    "summary": "This chunk describes how to upload an Excel file for data processing using the Importar Xls Instructions modal.",
+    "text": "Following the initiation of the 'Nuevo Proceso' from the main dashboard, the user encounters the import interface. [Image description: The image displays a modal dialog titled \"Importar Xls Instrucciones,\" which is used to upload Excel files into the system for processing. It includes a standard \"Choose File\" button to select the document from the local machine and two primary action buttons labeled \"Importar\" (to execute the import) and \"Cancelar\" (to close the dialog without action). This interface is the critical point of interaction for users to initiate the data import process required for compliance with the Central Bank of Uruguay communication.]\nNuevo Proceso de importación\nAl presionar se presenta la siguiente pantalla:\nEn donde se selecciona el archivo que contiene todas las instrucciones (formato fijo, ver Anexo Excel) y se da importar.",
+    "embed_input": "This chunk describes how to upload an Excel file for data processing using the Importar Xls Instructions modal.\n\nFollowing the initiation of the 'Nuevo Proceso' from the main dashboard, the user encounters the import interface. [Image description: The image displays a modal dialog titled \"Importar Xls Instrucciones,\" which is used to upload Excel files into the system for processing. It includes a standard \"Choose File\" button to select the document from the local machine and two primary action buttons labeled \"Importar\" (to execute the import) and \"Cancelar\" (to close the dialog without action). This interface is the critical point of interaction for users to initiate the data import process required for compliance with the Central Bank of Uruguay communication.]\nNuevo Proceso de importación\nAl presionar se presenta la siguiente pantalla:\nEn donde se selecciona el archivo que contiene todas las instrucciones (formato fijo, ver Anexo Excel) y se da importar."
+  },
+  {
+    "chunk_id": "db7075306c9ae05f48318b2da8fb772de0d9b35c5870f2a410735483865e1124",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Gestión y Corrección de Errores",
+    "chunk_index": 5,
+    "self_contained": false,
+    "missing_context": "The chunk refers to an 'Anexo Controles' that is not provided, and the phrase 'se hace' is grammatically incomplete, likely referring to a missing action (e.g., 'se hace el re-import').",
+    "summary": "This chunk explains how to identify, view, and resolve data errors encountered during the file import process within the BCF system.",
+    "text": "Following the data import process, the system provides tools to manage error identification and correction. The system performs automatic checks and if errors are found, it presents them in a grid. By clicking on 'errores', the system displays a detailed breakdown, including the line, column, tag, and reason for the error (see Anexo Controles for full details). Once all errors are resolved in the Excel file, the user must re-import the file; once the system processes the file without errors, the icon to generate the XML file is enabled.",
+    "embed_input": "This chunk explains how to identify, view, and resolve data errors encountered during the file import process within the BCF system.\n\nFollowing the data import process, the system provides tools to manage error identification and correction. The system performs automatic checks and if errors are found, it presents them in a grid. By clicking on 'errores', the system displays a detailed breakdown, including the line, column, tag, and reason for the error (see Anexo Controles for full details). Once all errors are resolved in the Excel file, the user must re-import the file; once the system processes the file without errors, the icon to generate the XML file is enabled."
+  },
+  {
+    "chunk_id": "672bf19338342641a3beb922e0599905d0a5f576347471e42f3b2be6f15814f0",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Generación y Gestión de Archivos XML",
+    "chunk_index": 6,
+    "self_contained": false,
+    "missing_context": "The chunk refers to an 'eliminar' option in a menu that is not visually or textually defined in the current text.",
+    "summary": "This chunk explains the process for generating, downloading, and regenerating XML files from the BCF system dashboard.",
+    "text": "In the BCF system's 'Procesamientos' screen, users can manage data imports and XML generation. [Image description: The image displays the \"Procesamientos\" (Processing) screen of the BCF system, which lists import operations with columns including ID, date, user, status (Imp), month, filename, line count, errors, and export status (Exp). It specifically highlights the workflow for generating the required XML file: when the \"EXPOK\" button is clicked in the \"Exp\" column for a processed file, the system automatically triggers a download of the XML file, as indicated by a red arrow pointing to the browser's download notification in the top right corner (e.g., \"Comunic_2019_334_202403 (2).xml\"). This visual confirms the successful generation and retrieval process of the compliant XML file required for the Banco Central del Uruguay communication.]\nHaciendo clic en el icono del xml, se genera el archivo y lo podemos obtener en descargas, quedando envío ok.\nEn caso de que por cualquier motivo se desee regenerar el xml, deberá eliminarse el envío e importar nuevamente el Excel, para generar nuevo XML.\nSe elimina en el menú de la línea:",
+    "embed_input": "This chunk explains the process for generating, downloading, and regenerating XML files from the BCF system dashboard.\n\nIn the BCF system's 'Procesamientos' screen, users can manage data imports and XML generation. [Image description: The image displays the \"Procesamientos\" (Processing) screen of the BCF system, which lists import operations with columns including ID, date, user, status (Imp), month, filename, line count, errors, and export status (Exp). It specifically highlights the workflow for generating the required XML file: when the \"EXPOK\" button is clicked in the \"Exp\" column for a processed file, the system automatically triggers a download of the XML file, as indicated by a red arrow pointing to the browser's download notification in the top right corner (e.g., \"Comunic_2019_334_202403 (2).xml\"). This visual confirms the successful generation and retrieval process of the compliant XML file required for the Banco Central del Uruguay communication.]\nHaciendo clic en el icono del xml, se genera el archivo y lo podemos obtener en descargas, quedando envío ok.\nEn caso de que por cualquier motivo se desee regenerar el xml, deberá eliminarse el envío e importar nuevamente el Excel, para generar nuevo XML.\nSe elimina en el menú de la línea:"
+  },
+  {
+    "chunk_id": "2ef7a318d574b4fff0e00eef0e069dee92e7a85ec7b25a7a81c6d75024e11a48",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Especificaciones Técnicas para el Formato Excel",
+    "chunk_index": 7,
+    "self_contained": false,
+    "missing_context": "The chunk refers to an 'Anexo explicación de Excel' and a visual structure that needs to be explicitly linked to the BCF system's data import requirements.",
+    "summary": "This chunk describes the mandatory column header structure and formatting requirements for Excel files used to import data into the BCF system.",
+    "text": "To ensure successful data processing in the BCF system, users must prepare their import files according to the following technical specifications for the Excel format. Anexo explicación de Excel: Se lee un archivo Excel predeterminado, conteniendo en la fila uno los títulos y comenzando los en la fila 2 comienzan los datos. La estructura es la siguiente: [Image description: The image displays the required header structure for the Excel spreadsheet used to import data into the BCF system. The first row contains the mandatory column names from A to N: tipo-linea, numero-instruccion, correlativo-instruccion, fecha-instruccion, instruccion-por-cuenta, tipo-instruccion, codigo-cliente, codigo-beneficiario, bajo-acuerdo-libre, intermediario-instruccion, tipo-codigo-instrumento, codigo-valor-instrumento, tipo-valor-instrumento, and descripcion-instrumento. These headers must be present in the user's spreadsheet to ensure successful data processing and XML generation for compliance with BCU Communication 2024/159.]",
+    "embed_input": "This chunk describes the mandatory column header structure and formatting requirements for Excel files used to import data into the BCF system.\n\nTo ensure successful data processing in the BCF system, users must prepare their import files according to the following technical specifications for the Excel format. Anexo explicación de Excel: Se lee un archivo Excel predeterminado, conteniendo en la fila uno los títulos y comenzando los en la fila 2 comienzan los datos. La estructura es la siguiente: [Image description: The image displays the required header structure for the Excel spreadsheet used to import data into the BCF system. The first row contains the mandatory column names from A to N: tipo-linea, numero-instruccion, correlativo-instruccion, fecha-instruccion, instruccion-por-cuenta, tipo-instruccion, codigo-cliente, codigo-beneficiario, bajo-acuerdo-libre, intermediario-instruccion, tipo-codigo-instrumento, codigo-valor-instrumento, tipo-valor-instrumento, and descripcion-instrumento. These headers must be present in the user's spreadsheet to ensure successful data processing and XML generation for compliance with BCU Communication 2024/159.]"
+  },
+  {
+    "chunk_id": "7771c4bc26e26fa62184f8064c5fba85a0c26aa7d661b7a833e3054ee6023931",
+    "source_file": "cartilla BCF usuarios V2.md",
+    "doc_type": "user_guide",
+    "section_title": "Controles y Validación de Datos BCU",
+    "chunk_index": 8,
+    "self_contained": false,
+    "missing_context": "The chunk refers to an external 'following detail' (table or list) regarding BCU currency codes that is absent.",
+    "summary": "This chunk describes the regulatory validation rules, data format requirements, and technical constraints established by the BCU for importing financial data into the BCF system.",
+    "text": "Following the data structure defined in the previous section, this part details the regulatory validations and technical specifications required by the BCU, concluding with a reference to currency code validation: The system controls the data included in the Excel; to this end, the technical specifications issued by the BCU were taken as a basis: The currency codes are validated against the BCU code, according to the following detail:",
+    "embed_input": "This chunk describes the regulatory validation rules, data format requirements, and technical constraints established by the BCU for importing financial data into the BCF system.\n\nFollowing the data structure defined in the previous section, this part details the regulatory validations and technical specifications required by the BCU, concluding with a reference to currency code validation: The system controls the data included in the Excel; to this end, the technical specifications issued by the BCU were taken as a basis: The currency codes are validated against the BCU code, according to the following detail:"
+  }
+]

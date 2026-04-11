@@ -5,6 +5,8 @@
 import * as dotenv from "dotenv";
 
 dotenv.config();
+console.log('Gemini api key: ', process.env.GEMINI_API_KEY);
+
 
 // ── Validate required environment variables on startup ────────────────────────────
 const REQUIRED_ENV = ["GEMINI_API_KEY", "LANGSMITH_API_KEY", "DB_NAME", "DB_USER", "DB_PASSWORD"];
@@ -44,7 +46,7 @@ export const LANGSMITH_CONFIG = {
   apiUrl: "https://eu.api.smith.langchain.com",
   // LangSmith prompt versions
   prompts: {
-    dataChecker: "data_checker:885899c9",
+    dataChecker: "data_checker:a4ef4150",
     respuestaFinal: "respuesta_final:77fd31b5",
   },
 } as const;

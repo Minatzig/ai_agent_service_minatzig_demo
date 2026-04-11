@@ -67,7 +67,7 @@ Example format:
 Return only raw JSON, no markdown fences, no explanation."""
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite-preview",
         contents=prompt
     )
 
@@ -95,7 +95,9 @@ def review_chunk(title: str, body: str, prev_body: str = None) -> dict:
 
     prompt = f"""You are reviewing a chunk of technical documentation for a RAG system.
 Assess whether this chunk is self-contained and meaningful on its own.
-
+Rules:
+- Make sure summary inlcudes all important keywords and concepts of the chunk.
+- The whole output must be in Spanish, as the document is in Spanish.
 {context_block}
 <current_chunk_title>{title}</current_chunk_title>
 <current_chunk_body>
@@ -111,7 +113,7 @@ Answer ONLY with a valid JSON object with these exact fields:
 Return only raw JSON, no markdown fences, no explanation."""
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite-preview",
         contents=prompt
     )
 
