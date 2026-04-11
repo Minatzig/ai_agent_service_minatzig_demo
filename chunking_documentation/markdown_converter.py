@@ -20,6 +20,7 @@ def _require(name: str) -> str:
 
 
 INPUT_FOLDER = _require("CHUNKER_INPUT_FOLDER")
+OUTPUT_FOLDER = _require("CHUNKER_OUTPUT_FOLDER")
 
 
 def convert_pdf(filepath: Path) -> str:
@@ -47,7 +48,7 @@ if __name__ == "__main__":
         print(f"📄 Converting PDF: {pdf.name}")
         try:
             markdown = convert_pdf(pdf)
-            out_path = input_path / f"{pdf.stem}.md"
+            out_path = Path(OUTPUT_FOLDER) / f"{pdf.stem}.md"
             with open(out_path, "w", encoding="utf-8") as f:
                 f.write(markdown)
             print(f"  ✅ Saved as {out_path.name}")
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         print(f"📄 Converting DOCX: {docx_file.name}")
         try:
             markdown = convert_docx(docx_file)
-            out_path = input_path / f"{docx_file.stem}.md"
+            out_path = Path(OUTPUT_FOLDER) / f"{docx_file.stem}.md"
             with open(out_path, "w", encoding="utf-8") as f:
                 f.write(markdown)
             print(f"  ✅ Saved as {out_path.name}")
