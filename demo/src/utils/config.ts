@@ -55,7 +55,7 @@ export const LANGSMITH_CONFIG = {
 export const GEMINI_CONFIG = {
   apiKey: process.env.GEMINI_API_KEY,
   embeddingModel: "gemini-embedding-001",
-  generationModel: "gemini-2.5-flash",
+  generationModel: "gemini-3.1-pro-preview",
 } as const;
 
 // ── RAG Pipeline Configuration ────────────────────────────────────────────────────

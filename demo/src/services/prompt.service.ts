@@ -64,16 +64,27 @@ export async function buildPrompt(
     apiUrl: LANGSMITH_CONFIG.apiUrl,
   });
 
+  console.log(`\n📋 [DEBUG] Prompt template: ${promptName}`);
+  console.log(`📋 [DEBUG] Variables being passed:`, Object.keys(vars));
+  for (const [k, v] of Object.entries(vars)) {
+    console.log(`  - ${k}: ${v.substring(0, 100)}...`);
+  }
+
   // Fill the template with provided variables
   const promptValue = await (prompt as any).invoke(vars);
+
+  console.log(`📋 [DEBUG] After invoke() - promptValue type:`, typeof promptValue);
+  console.log(`📋 [DEBUG] promptValue keys:`, Object.keys(promptValue || {}));
 
   // Extract all messages from the ChatPromptValue
   // This is critical because ChatPromptTemplates have both SYSTEM and HUMAN messages
   const messages = promptValue.messages || promptValue.toChatMessages?.() || [];
 
+  console.log(`📋 [DEBUG] Extracted ${messages.length} messages from promptValue`);
+
   if (messages.length > 0) {
     // Build the final prompt by concatenating all message types
-    const filled = messages
+    let filled = messages
       .map((m: any) => {
         const role    = m._getType?.() || m.role || "human";
         const content = m.content || "";
@@ -81,12 +92,31 @@ export async function buildPrompt(
       })
       .join("\n\n");
 
+    // Manually interpolate variables if LangChain didn't do it
+    for (const [key, value] of Object.entries(vars)) {
+      const placeholder = `{${key}}`;
+      if (filled.includes(placeholder)) {
+        console.log(`🔄 [DEBUG] Manually interpolating ${placeholder} with ${String(value).substring(0, 50)}...`);
+        filled = filled.replaceAll(placeholder, String(value));
+      }
+    }
+
     console.log(`📝 Prompt "${promptName}" filled:\n`, filled);
     return filled;
   }
 
   // Fallback if no messages found (shouldn't happen normally)
-  const filled = promptValue.toString();
+  let filled = promptValue.toString();
+  
+  // Manually interpolate variables
+  for (const [key, value] of Object.entries(vars)) {
+    const placeholder = `{${key}}`;
+    if (filled.includes(placeholder)) {
+      console.log(`🔄 [DEBUG] Manually interpolating ${placeholder} (fallback)`);
+      filled = filled.replaceAll(placeholder, String(value));
+    }
+  }
+  
   console.log(`📝 Prompt "${promptName}" filled (fallback):\n`, filled);
   return filled;
 }

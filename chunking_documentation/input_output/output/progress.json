@@ -1,0 +1,23 @@
+{
+  "started_at": "2026-04-11T16:22:22.506320",
+  "last_updated": "2026-04-11T16:30:36.080194",
+  "current_stage": 0,
+  "stages": {
+    "image_conversion": {
+      "completed": true,
+      "started": true
+    },
+    "markdown_conversion": {
+      "completed": true,
+      "started": true
+    },
+    "chunking": {
+      "completed": true,
+      "started": true
+    },
+    "embedding": {
+      "completed": true,
+      "started": true
+    }
+  }
+}
