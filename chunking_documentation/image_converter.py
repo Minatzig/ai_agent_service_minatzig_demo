@@ -205,6 +205,7 @@ Your task:
 2. Explain its relevance to the surrounding context
 3. Include any text visible in the image
 4. Preserve all important information that would be lost without the image
+5. The full description should be in Spanish, as the document is in Spanish.
 
 Write a comprehensive text description (2-4 sentences) that will replace the image in the documentation.
 Make it specific enough that someone reading only the text would understand what the image conveyed.

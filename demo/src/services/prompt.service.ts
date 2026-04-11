@@ -20,21 +20,24 @@ import { Chunk } from "../utils/types";
 const hubImport = require("langchain/hub/node");
 
 /**
- * Formats document chunks into a structured string for prompt injection.
- * Each chunk is enclosed with DOCUMENT_ID markers for tracking.
+ * Formats document chunks into a structured XML string for prompt injection.
+ * Each chunk is enclosed with XML tags for clear document separation.
  *
  * UTILITY FUNCTION: Formats data for injecting into prompts
  *
  * @param chunks - Array of document chunks to format
- * @returns A formatted string representation of all chunks
+ * @returns An XML formatted string representation of all chunks
  */
 export function formatChunks(chunks: Chunk[]): string {
   return chunks.map((c) =>
-    `DOCUMENT_ID: ${c.chunk_id}
-Source: ${c.source_file} > ${c.section_title}
-Content: ${c.text}
-END_DOCUMENT_ID: ${c.chunk_id}`
-  ).join("\n\n---\n\n");
+    `<document>
+  <document_id>${c.chunk_id}</document_id>
+  <source>${c.source_file} > ${c.section_title}</source>
+  <content>
+${c.text}
+  </content>
+</document>`
+  ).join("\n\n");
 }
 
 /**
@@ -78,12 +81,12 @@ export async function buildPrompt(
       })
       .join("\n\n");
 
-    console.log(`📝 Prompt "${promptName}" filled (first 500 chars):\n`, filled.slice(0, 500));
+    console.log(`📝 Prompt "${promptName}" filled:\n`, filled);
     return filled;
   }
 
   // Fallback if no messages found (shouldn't happen normally)
   const filled = promptValue.toString();
-  console.log(`📝 Prompt "${promptName}" filled (fallback, first 500 chars):\n`, filled.slice(0, 500));
+  console.log(`📝 Prompt "${promptName}" filled (fallback):\n`, filled);
   return filled;
 }

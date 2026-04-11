@@ -18,7 +18,7 @@ export function genId(): string {
  * @param stage - Current pipeline stage (e.g., "embedding_start", "vector_search_done")
  * @param extra - Additional key-value pairs to include in the log
  */
-export function log(reqId: string, stage: string, extra: Record<string, string | number> = {}): void {
+export function log(reqId: string, stage: string, extra: Record<string, string | number | boolean> = {}): void {
   const parts = [`[RAG] reqId=${reqId}`, `stage=${stage}`];
   for (const [k, v] of Object.entries(extra)) {
     parts.push(`${k}=${v}`);

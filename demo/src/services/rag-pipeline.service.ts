@@ -58,7 +58,7 @@ export async function runDataChecker(
   const raw     = await callGemini(filledPrompt);
   const cleaned = raw.trim().replace(/```json|```/g, "").trim();
 
-  console.log(`🤖 data_checker raw response:`, cleaned.slice(0, 300));
+  console.log(`🤖 data_checker raw response:`, cleaned);
 
   // Handle null or empty responses (LLM decided none of the docs are relevant)
   if (cleaned === "null" || cleaned === "") {
@@ -69,7 +69,7 @@ export async function runDataChecker(
     return parseJSON<DataCheckerResponse>(cleaned);
   } catch {
     // If JSON parsing fails, log a warning and return null to trigger fallback
-    console.warn("⚠️  data_checker did not return valid JSON:", cleaned.slice(0, 100));
+    console.warn("⚠️  data_checker did not return valid JSON:", cleaned);
     return null;
   }
 }
@@ -114,7 +114,7 @@ export async function runRespuestaFinal(
     return parseJSON<FinalAnswerResponse>(raw);
   } catch {
     // If JSON parsing fails, return the raw text as the answer with default handoff false
-    console.warn("⚠️  respuesta_final did not return valid JSON:", raw.trim().slice(0, 100));
+    console.warn("⚠️  respuesta_final did not return valid JSON:", raw);
     return {
       logica:         "Respuesta generada directamente.",
       docuementacion: "",
