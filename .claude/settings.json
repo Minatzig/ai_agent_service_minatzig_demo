@@ -1,0 +1,43 @@
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(python main.py)",
+      "Bash(python debug.py)",
+      "Bash(pip install *)",
+      "Bash(cd demo && npm run dev)",
+      "Bash(cd demo && npm run build)",
+      "Bash(cd demo && npm start)",
+      "Bash(cd demo && npm install *)",
+      "Bash(cd demo && npx tsc --noEmit)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git push)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_FILE_PATHS\" | grep -q 'demo/'; then cd demo && npx tsc --noEmit 2>&1 | tail -20; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
