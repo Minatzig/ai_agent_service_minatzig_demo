@@ -83,7 +83,9 @@ askRouter.post("/ask", async (req: Request, res: Response) => {
     // ────────────────────────────────────────────────────────────────────────
     // EXECUTE: Call controller to run the RAG pipeline
     // ────────────────────────────────────────────────────────────────────────
-    const result = await executeRAGPipeline(question, reqId);
+    const resolvedClientName = process.env.CLIENT_NAME ?? "";
+    const resolvedContext    = "";
+    const result = await executeRAGPipeline(question, reqId, resolvedClientName, resolvedContext);
 
     // ────────────────────────────────────────────────────────────────────────
     // RESPOND: Send successful response with all pipeline outputs

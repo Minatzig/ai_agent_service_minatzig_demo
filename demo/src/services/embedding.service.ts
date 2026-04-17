@@ -17,6 +17,10 @@ import { sql } from "drizzle-orm";
 import { GEMINI_CONFIG, RAG_CONFIG, ENV } from "../utils/config";
 import { GoogleGenAI } from "@google/genai";
 import { Chunk } from "../utils/types";
+import { withTimeout } from "../utils/async";
+
+const GEMINI_EMBED_TIMEOUT_MS   = 15_000;
+const PG_VECTOR_SEARCH_TIMEOUT_MS = 10_000;
 
 // ── Gemini Client Setup ───────────────────────────────────────────────────────
 // Initialize the Gemini client for embeddings
@@ -114,10 +118,14 @@ export async function detectDimensions(): Promise<void> {
  * @returns A vector of floating-point numbers (768 dimensions for Gemini)
  */
 export async function embedQuestion(question: string): Promise<number[]> {
-  const response = await gemini.models.embedContent({
-    model: GEMINI_CONFIG.embeddingModel,
-    contents: question,
-  });
+  const response = await withTimeout(
+    gemini.models.embedContent({
+      model: GEMINI_CONFIG.embeddingModel,
+      contents: question,
+    }),
+    GEMINI_EMBED_TIMEOUT_MS,
+    "gemini_embed"
+  );
 
   let vec = response.embeddings![0].values!;
 
@@ -150,17 +158,21 @@ export async function retrieveChunks(embedding: number[], topK: number = RAG_CON
   );
 
   // Use PostgreSQL cosine distance operator (<=>)to find similar chunks
-  const result = await db.execute(sql`
-    SELECT
-      chunk_id,
-      source_file,
-      section_title,
-      text,
-      1 - (embedding <=> ${vectorStr}::vector) AS similarity
-    FROM document_chunks
-    ORDER BY embedding <=> ${vectorStr}::vector
-    LIMIT ${topK}
-  `);
+  const result = await withTimeout(
+    db.execute(sql`
+      SELECT
+        chunk_id,
+        source_file,
+        section_title,
+        text,
+        1 - (embedding <=> ${vectorStr}::vector) AS similarity
+      FROM document_chunks
+      ORDER BY embedding <=> ${vectorStr}::vector
+      LIMIT ${topK}
+    `),
+    PG_VECTOR_SEARCH_TIMEOUT_MS,
+    "pg_vector_search"
+  );
 
   return result.rows as unknown as Chunk[];
 }

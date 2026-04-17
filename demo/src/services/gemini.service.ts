@@ -15,26 +15,49 @@
 import { GoogleGenAI } from "@google/genai";
 import { wrapGemini } from "langsmith/wrappers/gemini";
 import { GEMINI_CONFIG } from "../utils/config";
+import { withRetry, withTimeout } from "../utils/async";
 
 // ── Initialize Gemini Client (wrapped for LangSmith tracing) ────────────────────
 const geminiClient = new GoogleGenAI({ apiKey: GEMINI_CONFIG.apiKey! });
 const gemini = wrapGemini(geminiClient);
 
+const GEMINI_GENERATE_TIMEOUT_MS = 30_000;
+const GEMINI_GENERATE_RETRIES    = 1;
+const GEMINI_GENERATE_RETRY_MS   = 1_000;
+
 /**
  * Calls the Gemini API to generate content from a given prompt.
- * Uses the gemini-2.5-flash model for fast content generation.
- *
- * SERVICE RESPONSIBILITY: External API call to generate content
+ * Wrapped with a 30s timeout and 1 retry (1s delay) on failure.
  *
  * @param prompt - The prompt to send to Gemini
+ * @param ctx    - Optional reqId / stage for retry logging
  * @returns The generated text response from Gemini
  */
-export async function callGemini(prompt: string): Promise<string> {
-  const response = await gemini.models.generateContent({
-    model: GEMINI_CONFIG.generationModel,
-    contents: prompt,
-  });
-  return response.text ?? "";
+export async function callGemini(
+  prompt: string,
+  ctx?: { reqId?: string; stage?: string }
+): Promise<string> {
+  const stage = ctx?.stage ?? "gemini_generate";
+  return withRetry(
+    () =>
+      withTimeout(
+        (async () => {
+          const response = await gemini.models.generateContent({
+            model: GEMINI_CONFIG.generationModel,
+            contents: prompt,
+          });
+          return response.text ?? "";
+        })(),
+        GEMINI_GENERATE_TIMEOUT_MS,
+        `gemini_generate(${stage})`
+      ),
+    {
+      retries: GEMINI_GENERATE_RETRIES,
+      delayMs: GEMINI_GENERATE_RETRY_MS,
+      stage,
+      reqId: ctx?.reqId,
+    }
+  );
 }
 
 /**

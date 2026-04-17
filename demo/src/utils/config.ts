@@ -17,10 +17,15 @@ for (const key of REQUIRED_ENV) {
 }
 
 // ── Application Metadata ──────────────────────────────────────────────────────────
+// CLIENT_NAME: default client label injected into prompts when the request
+//   does not carry its own `clientName`. Empty string = no default.
+// AI_SERVICE_SECRET: if set, /ask and /v1/resolve require
+//   `Authorization: Bearer <secret>`. Empty = open mode (warning logged).
 export const APP_CONFIG = {
   signature: "2026-02-25-A",
   renderCommit: process.env.RENDER_GIT_COMMIT || "unknown",
-  clientName: "Vicky", // Hardcoded client name used in prompts
+  clientName: process.env.CLIENT_NAME || "",
+  aiServiceSecret: process.env.AI_SERVICE_SECRET || "",
   port: Number(process.env.PORT) || 3000,
 } as const;
 

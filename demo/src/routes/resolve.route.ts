@@ -58,7 +58,9 @@ resolveRouter.post("/v1/resolve", async (req: Request, res: Response) => {
   const reqId  = (req.body?.MessageSid as string | undefined) || genId();
   const tTotal = Date.now();
 
-  const { text } = req.body as ResolveRequest;
+  const { text, clientName, context } = req.body as ResolveRequest;
+  const resolvedClientName = clientName ?? process.env.CLIENT_NAME ?? "";
+  const resolvedContext    = context    ?? "";
 
   // Log incoming request
   log(reqId, "request_received", { method: "POST", path: "/v1/resolve" });
@@ -80,7 +82,7 @@ resolveRouter.post("/v1/resolve", async (req: Request, res: Response) => {
     // ────────────────────────────────────────────────────────────────────────
     // EXECUTE: Call controller to run the RAG pipeline
     // ────────────────────────────────────────────────────────────────────────
-    const result = await executeRAGPipelineMinimal(text, reqId);
+    const result = await executeRAGPipelineMinimal(text, reqId, resolvedClientName, resolvedContext);
 
     // ────────────────────────────────────────────────────────────────────────
     // RESPOND: Send successful response with only the answer text

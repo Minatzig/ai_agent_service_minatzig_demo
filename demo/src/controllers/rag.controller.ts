@@ -56,7 +56,9 @@ import { RAG_CONFIG } from "../utils/config";
  */
 export async function executeRAGPipeline(
   question: string,
-  reqId: string
+  reqId: string,
+  clientName: string = "",
+  context: string = ""
 ): Promise<{
   answer: string;
   logic: string;
@@ -95,7 +97,7 @@ export async function executeRAGPipeline(
     console.log(`\n🔍 Running data_checker...`);
     log(reqId, "data_checker_start");
     const tChecker = Date.now();
-    const checkerResult = await runDataChecker(question, chunks);
+    const checkerResult = await runDataChecker(question, chunks, reqId);
     log(reqId, "data_checker_done", {
       durationMs: Date.now() - tChecker,
       selected: checkerResult?.relevant_documents?.length ?? 0,
@@ -137,7 +139,7 @@ export async function executeRAGPipeline(
     console.log(`\n💬 Running respuesta_final...`);
     log(reqId, "final_answer_start");
     const tFinal = Date.now();
-    const finalAnswer = await runRespuestaFinal(question, relevantChunks);
+    const finalAnswer = await runRespuestaFinal(question, relevantChunks, clientName, context, reqId);
     log(reqId, "final_answer_done", { durationMs: Date.now() - tFinal });
     console.log(`✅ Answer generated`);
 
@@ -178,7 +180,9 @@ export async function executeRAGPipeline(
  */
 export async function executeRAGPipelineMinimal(
   text: string,
-  reqId: string
+  reqId: string,
+  clientName: string = "",
+  context: string = ""
 ): Promise<{
   replyText: string;
   handoff: boolean;
@@ -205,7 +209,7 @@ export async function executeRAGPipelineMinimal(
     // Step 3: Data checker
     log(reqId, "data_checker_start");
     const tChecker = Date.now();
-    const checkerResult = await runDataChecker(text, chunks);
+    const checkerResult = await runDataChecker(text, chunks, reqId);
     log(reqId, "data_checker_done", {
       durationMs: Date.now() - tChecker,
       selected: checkerResult?.relevant_documents?.length ?? 0,
@@ -235,7 +239,7 @@ export async function executeRAGPipelineMinimal(
     // Step 5: Generate answer
     log(reqId, "final_answer_start");
     const tFinal = Date.now();
-    const finalAnswer = await runRespuestaFinal(text, relevantChunks);
+    const finalAnswer = await runRespuestaFinal(text, relevantChunks, clientName, context, reqId);
     log(reqId, "final_answer_done", { durationMs: Date.now() - tFinal });
 
     const executionTime = Date.now() - tTotal;

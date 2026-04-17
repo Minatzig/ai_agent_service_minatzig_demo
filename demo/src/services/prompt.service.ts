@@ -14,10 +14,48 @@
 
 import { LANGSMITH_CONFIG } from "../utils/config";
 import { Chunk } from "../utils/types";
+import { withTimeout } from "../utils/async";
 
 // Use require for langchain/hub/node to avoid TypeScript module resolution issues
 // @ts-ignore - langchain/hub has known TypeScript issues in some environments
 const hubImport = require("langchain/hub/node");
+
+const HUB_PULL_TIMEOUT_MS = 10_000;
+
+// ── Prompt Cache ──────────────────────────────────────────────────────────────
+// Prompts are pinned by commit hash (e.g. "data_checker:a4ef4150") — their
+// contents never change for a given key, so caching indefinitely is safe.
+// Storing the in-flight Promise ensures concurrent first-requests de-duplicate
+// to a single hub.pull call; failed pulls are evicted so the next caller retries.
+const promptCache = new Map<string, Promise<unknown>>();
+
+async function pullPromptCached(promptName: string): Promise<unknown> {
+  const cached = promptCache.get(promptName);
+  if (cached) {
+    console.log(`📦 [prompt-cache] hit: ${promptName}`);
+    return cached;
+  }
+  console.log(`🌐 [prompt-cache] miss: ${promptName}`);
+
+  const promise = (async () => {
+    try {
+      return await withTimeout(
+        hubImport.pull(promptName, {
+          apiKey: LANGSMITH_CONFIG.apiKey,
+          apiUrl: LANGSMITH_CONFIG.apiUrl,
+        }),
+        HUB_PULL_TIMEOUT_MS,
+        `langsmith_hub_pull(${promptName})`
+      );
+    } catch (err) {
+      promptCache.delete(promptName);
+      throw err;
+    }
+  })();
+
+  promptCache.set(promptName, promise);
+  return promise;
+}
 
 /**
  * Formats document chunks into a structured XML string for prompt injection.
@@ -58,11 +96,8 @@ export async function buildPrompt(
   promptName: string,
   vars: Record<string, string>
 ): Promise<string> {
-  // Fetch the prompt template from LangSmith hub
-  const prompt = await hubImport.pull(promptName, {
-    apiKey: LANGSMITH_CONFIG.apiKey,
-    apiUrl: LANGSMITH_CONFIG.apiUrl,
-  });
+  // Fetch the prompt template from LangSmith hub (cached after first pull)
+  const prompt = await pullPromptCached(promptName);
 
   console.log(`\n📋 [DEBUG] Prompt template: ${promptName}`);
   console.log(`📋 [DEBUG] Variables being passed:`, Object.keys(vars));

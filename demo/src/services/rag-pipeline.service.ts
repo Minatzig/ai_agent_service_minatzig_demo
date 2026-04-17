@@ -21,7 +21,7 @@ import {
   DataCheckerResponse,
   FinalAnswerResponse,
 } from "../utils/types";
-import { LANGSMITH_CONFIG, APP_CONFIG } from "../utils/config";
+import { LANGSMITH_CONFIG } from "../utils/config";
 
 /**
  * STAGE 1: Data Checker
@@ -42,7 +42,8 @@ import { LANGSMITH_CONFIG, APP_CONFIG } from "../utils/config";
  */
 export async function runDataChecker(
   question: string,
-  chunks: Chunk[]
+  chunks: Chunk[],
+  reqId?: string
 ): Promise<DataCheckerResponse | null> {
   // Build the allowed IDs list forced the model to select from existing chunks
   const allowedIds   = chunks.map(c => c.chunk_id).join(", ");
@@ -55,7 +56,7 @@ export async function runDataChecker(
   });
 
   // Call Gemini to select relevant documents
-  const raw     = await callGemini(filledPrompt);
+  const raw     = await callGemini(filledPrompt, { reqId, stage: "data_checker" });
   const cleaned = raw.trim().replace(/```json|```/g, "").trim();
 
   console.log(`🤖 data_checker raw response:`, cleaned);
@@ -96,19 +97,22 @@ export async function runDataChecker(
  */
 export async function runRespuestaFinal(
   question: string,
-  relevantChunks: Chunk[]
+  relevantChunks: Chunk[],
+  clientName: string,
+  context: string,
+  reqId?: string
 ): Promise<FinalAnswerResponse> {
   // Fill the respuesta_final prompt with the relevant documents
   const filledPrompt = await buildPrompt(LANGSMITH_CONFIG.prompts.respuestaFinal, {
     question,
     retrieved_document: formatChunks(relevantChunks),
-    client_name:        APP_CONFIG.clientName,
-    mensaje_original:   question,  // Will be replaced with real message when conversation layer is built
-    contexto:           "",        // Will be replaced with real context when conversation layer is built
+    client_name:        clientName,
+    mensaje_original:   question,
+    contexto:           context,
   });
 
   // Call Gemini to generate the final answer
-  const raw = await callGemini(filledPrompt);
+  const raw = await callGemini(filledPrompt, { reqId, stage: "respuesta_final" });
 
   try {
     return parseJSON<FinalAnswerResponse>(raw);

@@ -64,11 +64,13 @@ export interface AskResponse {
 
 /**
  * Request body for the /v1/resolve endpoint.
- * Contains the user's text input.
+ * Contains the user's text input and optional per-request overrides.
  */
 export interface ResolveRequest {
   text?: string;
   MessageSid?: string; // Optional Twilio message ID
+  clientName?: string; // Overrides CLIENT_NAME env for this request
+  context?: string;    // Conversation / business context injected into the final prompt
 }
 
 /**

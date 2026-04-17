@@ -33,6 +33,7 @@ import { healthRouter } from "./routes/health.route";
 import { checkDB } from "./utils/database";
 import { detectDimensions } from "./services/embedding.service";
 import { APP_CONFIG, logBootInfo } from "./utils/config";
+import { requireAuth, logAuthWarningOnce } from "./middleware/auth.middleware";
 
 // ── Initialize Express application ────────────────────────────────────────────
 const app = express();
@@ -42,10 +43,12 @@ const app = express();
 app.use(express.json());
 
 // ── Register Routes ───────────────────────────────────────────────────────────
-// Mount all route handlers
-app.use(healthRouter);    // GET /healthz
-app.use(askRouter);       // POST /ask
-app.use(resolveRouter);   // POST /v1/resolve
+// Mount all route handlers.
+// /healthz is always open. /ask and /v1/resolve go through the auth middleware,
+// which is a no-op when AI_SERVICE_SECRET is not set (open mode).
+app.use(healthRouter);                // GET /healthz
+app.use(requireAuth, askRouter);      // POST /ask
+app.use(requireAuth, resolveRouter);  // POST /v1/resolve
 
 // ── Startup Sequence ──────────────────────────────────────────────────────────
 
@@ -57,6 +60,9 @@ app.use(resolveRouter);   // POST /v1/resolve
 async function startup(): Promise<void> {
   // Log boot information
   logBootInfo();
+
+  // Emit auth open-mode warning once if AI_SERVICE_SECRET is unset
+  logAuthWarningOnce();
 
   // Check database connectivity and schema
   await checkDB();
